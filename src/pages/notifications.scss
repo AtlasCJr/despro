@@ -161,6 +161,14 @@
             .accordion-content {
                 padding: 1rem 2rem;
                 display: none;
+
+                h2 {
+                    font-size: 1.25rem;
+                }
+
+                p {
+                    font-size: .75rem;
+                }
             }
 
             button {

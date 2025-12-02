@@ -373,7 +373,7 @@ export default function Dashboard() {
                             <p>No unread notifications.</p>
                         ) : (
                             (Object.entries(unreadByType) as [InfoType, number][]).map(([cat, count]) => (
-                                <div key={cat} className="notif-card">
+                                <div key={cat} className={`notif-card ${informationTypeMapping[cat]}`}>
                                     <h1>{count ?? 0}</h1>
                                     <h4>{informationTypeMapping[cat]}</h4>
                                 </div>

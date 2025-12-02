@@ -167,7 +167,13 @@ export default function Components() {
                     }}
                 >   
                     <div>
-                        <div className={`${component?.info.isOn ? "on" : "off"}`} onClick={() => {toggleOnOff()}}>
+                        <div 
+                            className={`${component?.info.isOn ? "on" : "off"}`} 
+                            onClick={(e) => {
+                                toggleOnOff()
+                                e.stopPropagation()
+                            }}
+                        >
                             <PowerLogo />
                         </div>
                     </div>
@@ -177,7 +183,7 @@ export default function Components() {
                         </div>
                         
                         <NoticePopup customClassName="limit" isOpen={showPopup[1]} onClose={() => setShowPopup(Array(4).fill(false))}>
-                            <h2><b>Change Power Limit</b></h2>
+                            <h2>Change Power Limit</h2>
                             <p>
                                 Change your power limit in Wh. Set to 0 if you want to remove the limit instead.
                             </p>
@@ -193,9 +199,9 @@ export default function Components() {
                                     value={tempLimit}
                                     onChange={(e) => setTempLimit(Number(e.target.value))}
                                 />
-                                <h2>Wh</h2>
-                                <h2>=</h2>
-                                <h2>{Num2Currency(tempLimit * RpPerkWh)}</h2>
+                                <h2 className="change-power-text">Wh</h2>
+                                <h2 className="change-power-text">=</h2>
+                                <h2 className="change-power-text">{Num2Currency(tempLimit * RpPerkWh)}</h2>
                             </div>
 
                             <div className="modal-actions">
@@ -229,9 +235,9 @@ export default function Components() {
                         </div>
 
                         <NoticePopup customClassName="delete" isOpen={showPopup[2]} onClose={() => setShowPopup(Array(4).fill(false))}>
-                            <h2><b>Confirm Deletion</b></h2>
+                            <h2>Confirm Deletion</h2>
                             <p>
-                                Are you sure you want to delete all data from <b>{component?.name}</b>
+                                Are you sure you want to delete all data shown from <b>{component?.name}</b>
                             </p>
                             <div className="modal-actions">
                                 <button className="btn secondary" onClick={() => {
@@ -273,7 +279,7 @@ export default function Components() {
                     <NoticePopup customClassName="change-name" isOpen={showPopup[3]} onClose={() => setShowPopup(Array(4).fill(false))}>
                         <h2>Rename Component?</h2>
                         <p>
-                            Change <b>{component?.name}</b> to <b>{tempName}</b>?
+                            Do you want to change the component name from <b>{component?.name}</b> to <b>{tempName}</b>?
                         </p>
                         <div className="modal-actions change-name">
                             <button className="btn secondary" onClick={() => {
@@ -303,18 +309,18 @@ export default function Components() {
                             }
                         }}
                         onBlur={() => {
-                            if (tempName.trim() !== "") setShowPopup([true, false, false, false]);
+                            if (tempType.trim() !== "") setShowPopup([true, false, false, false]);
                         }}
                     />
 
                     <NoticePopup customClassName="change-type" isOpen={showPopup[0]} onClose={() => setShowPopup(Array(4).fill(false))}>
                         <h2>Change Type?</h2>
                         <p>
-                            Change <b>{component?.type}</b> to <b>{tempType}</b>?
+                            Do you want to change the component type from <b>{component?.type}</b> to <b>{tempType}</b>?
                         </p>
-                        <div className="modal-actions change-name">
+                        <div className="modal-actions change-type">
                             <button className="btn secondary" onClick={() => {
-                                setTempName("");
+                                setTempType("");
                                 setShowPopup(Array(4).fill(false));
                             }}
                             > Cancel </button>
@@ -323,7 +329,7 @@ export default function Components() {
                                 setTempType("")
                                 setShowPopup(Array(4).fill(false));
                                 }}
-                            > Change Name </button>
+                            > Change Type </button>
                         </div>
                     </NoticePopup>
                 </div>

@@ -152,23 +152,19 @@ export default function Notifications() {
                             <div className="accordion-content">
                                 <h2>
                                     {`${mapDay[date.getDay()]}, ${date.getDate()} ${date.toLocaleString(
-                                    "en-US",
-                                    { month: "short" }
-                                    )} ${date.getFullYear()}, ${date.toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    second: "2-digit",
+                                        "en-US",
+                                        { month: "short" }
+                                        )} ${date.getFullYear()}, ${date.toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        second: "2-digit",
                                     })}`}
                                 </h2>
                                 <p>{data.content}</p>
 
                                 <div className="row actions">
-                                    <button onClick={() => markRead(data.id, true)} disabled={data.isRead}>
-                                    Mark read
-                                    </button>
-                                    <button className="danger" onClick={() => remove(data.id)}>
-                                    Delete
-                                    </button>
+                                    <button onClick={() => markRead(data.id, true)} disabled={data.isRead}> Mark read </button>
+                                    <button className="danger" onClick={() => remove(data.id)}> Delete </button>
                                 </div>
                             </div>
                         </div>

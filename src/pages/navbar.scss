@@ -1,5 +1,5 @@
 :root {
-    --navbarImgSize: 2rem;
+    --navbarImgSize: 1.75rem;
     --navbarWidth: max(15dvw, 250px);
 }
 
@@ -44,7 +44,7 @@
     }
 
     a {
-        height: calc(var(--navbarImgSize) * 1.2);
+        height: calc(var(--navbarImgSize) * 1);
         padding: 0.5rem 1rem;
         display: flex;
         align-items: center;
@@ -70,7 +70,7 @@
     h2 {
         color: #BBBBBB;
         font-family: "Poppins";
-        font-size: 1rem;
+        font-size: .9rem;
         font-weight: 300;
         user-select: none;
     }
@@ -85,16 +85,16 @@
         border-radius: .5rem;
 
         width: 100%;
-        height: calc(var(--navbarImgSize) * 1.2 + 1rem);
+        height: calc(var(--navbarImgSize) * 1 + 1rem);
         background-color: #343434;
 
         transition: top .5s ease-in-out;
 
         &.level-0 { top: 3rem; }
-        &.level-1 { top: calc(3rem + (var(--navbarImgSize) + 0.85rem) * 1.2); }
-        &.level-2 { top: calc(3rem + (var(--navbarImgSize) + 0.85rem) * 1.2 * 2); }
-        &.level-3 { top: calc(3rem + (var(--navbarImgSize) + 0.85rem) * 1.2 * 3); }
-        &.level-4 { top: calc(3rem + (var(--navbarImgSize) + 0.85rem) * 1.2 * 4); }
+        &.level-1 { top: calc(3rem + (var(--navbarImgSize) + 0.5rem) * 1.2); }
+        &.level-2 { top: calc(3rem + (var(--navbarImgSize) + 0.5rem) * 1.2 * 2); }
+        &.level-3 { top: calc(3rem + (var(--navbarImgSize) + 0.5rem) * 1.2 * 3); }
+        &.level-4 { top: calc(3rem + (var(--navbarImgSize) + 0.5rem) * 1.2 * 4); }
     }
 
     img {
@@ -108,7 +108,7 @@
 
         h3 {
             font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             line-height: 1;
             width: 1rem;
