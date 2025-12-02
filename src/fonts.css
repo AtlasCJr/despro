@@ -1,46 +1,46 @@
 @font-face {
     font-family: "BodoniModa";
     font-style: normal;
-    src: url("/fonts/BodoniModa.ttf") format("truetype");
+    src: url("/src/assets/fonts/BodoniModa.ttf") format("truetype");
 }
 
 @font-face {
     font-family: "LibreBaskerville";
     font-style: normal;
-    src: url("/fonts/LibreBaskerville.ttf") format("truetype");
+    src: url("/src/assets/fonts/LibreBaskerville.ttf") format("truetype");
 }
 
 @font-face {
     font-family: "Poppins";
-    src: url("/fonts/Poppins-Medium.ttf") format("truetype");
+    src: url("/src/assets/fonts/Poppins-Medium.ttf") format("truetype");
     font-weight: 500;
     font-style: normal;
 }
 
 @font-face {
     font-family: "Poppins";
-    src: url("/fonts/Poppins-Light.ttf") format("truetype");
+    src: url("/src/assets/fonts/Poppins-Light.ttf") format("truetype");
     font-weight: 300;
     font-style: normal;
 }
 
 @font-face {
     font-family: "Poppins";
-    src: url("/fonts/Poppins-Bold.ttf") format("truetype");
+    src: url("/src/assets/fonts/Poppins-Bold.ttf") format("truetype");
     font-weight: 700;
     font-style: normal;
 }
 
 @font-face {
     font-family: "Poppins";
-    src: url("/fonts/Poppins-ExtraLight.ttf") format("truetype");
+    src: url("/src/assets/fonts/Poppins-ExtraLight.ttf") format("truetype");
     font-weight: 100;
     font-style: normal;
 }
 
 @font-face {
     font-family: "Poppins";
-    src: url("/fonts/Poppins-ExtraBold.ttf") format("truetype");
+    src: url("/src/assets/fonts/Poppins-ExtraBold.ttf") format("truetype");
     font-weight: 900;
     font-style: normal;
 }
@@ -48,7 +48,7 @@
 @font-face {
     font-family: "Roboto";
     font-style: normal;
-    src: url("/fonts/Roboto.ttf") format("truetype");
+    src: url("/src/assets/fonts/Roboto.ttf") format("truetype");
 }
 
 @media (prefers-color-scheme: light) {
