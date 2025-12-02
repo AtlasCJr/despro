@@ -1,69 +1,117 @@
-# React + TypeScript + Vite
+# GTW NAMA APPNYA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Despro is an IoT-based smart power-monitoring system built using ESP32, ACS712 current sensors, ZMPT voltage sensors, relays, and a React + Firebase web dashboard.
 
-Currently, two official plugins are available:
+## What This Project Does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### **1. Embedded System (ESP32)**  
+The ESP32 acts as the main controller of the entire system. It performs:
 
-## Expanding the ESLint configuration
+#### Sensor Reading  
+- Reads **voltage** (ZMPT101B) and **current** (ACS712) at high frequency
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+#### Power Calculations  
+The system computes:
+- **Active Power**
+- **Reactive Power**
+- **Apparent Power**
+- **Power Factor**
+- **Frequency**
+- **Harmonics**
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+#### Load Control  
+- Supports **4–8 AC loads** through relay switching  
+- Real-time switching via local logic or remote dashboard
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+#### Task Scheduling & Data Processing  
+- Uses **FreeRTOS** for multitasking  
+- Performs **batch averaging** for stable readings  
+- Sends processed data to **Firestore every 60 seconds**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+#### Offline Handling  
+- Automatically stores queued data in **SPIFFS** when Wi-Fi is offline  
+- Uploads stored data once connection returns
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+#### System Notifications  
+The firmware automatically detects and reports critical states:
+- High ESP32 temperature  
+- Low heap memory  
+- Wi-Fi reconnect / disconnect  
+- Device reboot (with reset cause)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ☁️ 2. Cloud Backend (Firebase Firestore)
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Firestore serves as the real-time database and historical storage layer for the system.
+
+### Data Architecture
+Despro uses a multi-layer data model:
+
+- **RL1** — Raw minute-level data  
+- **RL2 / RL3** — Aggregated hourly and daily data  
+- **PL1–PL5** — Higher-level processed data (weekly, monthly, yearly trends)
+
+### Backend Responsibilities
+Firestore stores:
+- Real-time power data  
+- Aggregated analytics  
+- Notification logs  
+- Component metadata (device info, configuration, status)  
+
+The backend is optimized for:
+- Fast writes from ESP32  
+- Real-time UI updates  
+- Scalable historical storage  
+
+---
+
+## 3. Web Dashboard (React + Firebase)
+
+A modern control and monitoring dashboard built using **React + TypeScript**.
+
+### Dashboard Features
+- Real-time charts (voltage, current, power, PF, frequency)  
+- Today / Weekly / Monthly / Yearly views  
+- Component status cards  
+- Notification center  
+- Relay control interface  
+- Cost estimation & energy analytics  
+- Automatic refresh with Firestore listeners  
+
+### Technologies Used
+- React + Vite  
+- Recharts  
+- Firebase Web SDK  
+- TypeScript  
+- Custom hooks for Firestore data (useBundle, useComponentData, etc.)
+
+---
+
+## 4. Hardware Overview
+
+The system consists of:
+
+- **ESP32 DevKit** — Main microcontroller  
+- **ACS712** — Current sensor (5A / 20A / 30A)  
+- **ZMPT101B** — Voltage sensor  
+- **Relay Module (4–8 channels)** — Load control  
+- **HLK-PM05 / HLK-10M05** — AC–DC converter  
+- **WAGO connectors** — Safe AC wiring  
+- **ILI9341 Display (optional)** — Local UI  
+- **SD Card Module (optional)** — Offline storage  
+- Custom PCB (in development)
+
+---
+
+## 5. System Highlights
+
+- Real-time power monitoring  
+- Accurate signal processing  
+- Offline fail-safe upload  
+- FreeRTOS-based multitasking  
+- Auto-recovery from connectivity loss  
+- Modular firmware design  
+- Scalable Firestore structure  
+- Fully interactive web dashboard  
+- Notification-driven monitoring  
+
+---
