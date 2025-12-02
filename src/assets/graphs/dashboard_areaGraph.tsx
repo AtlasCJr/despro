@@ -105,7 +105,7 @@ export const TotalPowerTodayMulti = memo(function TotalPowerTodayMulti({
 
     return (
         <div className="chart">
-            <ResponsiveContainer width="100%">
+            <ResponsiveContainer width="100%" height="90%">
                 <AreaChart
                     data={series}
                     margin={{ top: 10, right: 10, left: 10, bottom: 40 }}
@@ -128,8 +128,8 @@ export const TotalPowerTodayMulti = memo(function TotalPowerTodayMulti({
                     </defs>
 
                     <CartesianGrid stroke="#EEEEEE" vertical={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={24} minTickGap={60} />
-                    <YAxis axisLine={false} tickLine={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={24} minTickGap={60} tick={{fontSize: 12}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} />
                     <Tooltip formatter={(val: number) => val.toFixed(2) + " W"} />
 
                     <Legend verticalAlign="bottom" align="center" wrapperStyle={{ position: "relative" }} />

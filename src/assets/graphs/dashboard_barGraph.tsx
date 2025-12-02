@@ -77,10 +77,10 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
                 </defs>
 
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis dataKey="name" tick={{fontSize: 12}} />
 
                 {/* Y-axis di kanan */}
-                <YAxis orientation="right" />
+                <YAxis orientation="right" tick={{fontSize: 12}} />
 
                 <Tooltip
                     formatter={(value: any, name: string, entry: any) => {

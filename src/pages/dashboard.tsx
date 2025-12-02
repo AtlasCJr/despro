@@ -98,6 +98,11 @@ export default function Dashboard() {
         }, 0);
     }, [latestRL1]);
 
+    const totalUnread = Object.values(unreadByType).reduce(
+        (sum, val) => sum + (val ?? 0),
+        0
+    );
+
     const { powerNow, onlineCount, latestTimestamp } = useMemo(() => {
         let p = 0;
         let c = 0;
@@ -312,7 +317,7 @@ export default function Dashboard() {
                 <div className='div5'>
                     <div>
                         <h2>Usage Percentage</h2>
-                        <h2>View All</h2>
+                        <h2 className='view-all'>View All</h2>
                     </div>
                     <div>
                     {Object.entries(latestRL1)
@@ -360,16 +365,20 @@ export default function Dashboard() {
                 <div className='div8'>
                     <div>
                         <h2>Unread Notifications</h2>
-                        <h2>View All</h2>
+                        <h2 className='view-all'>View All</h2>
                     </div>
 
                     <div>
-                        {(Object.entries(unreadByType) as [InfoType, number][]).map(([cat, count]) => (
-                            <div key={cat} className="notif-card">
-                                <h1>{count ?? 0}</h1>
-                                <h4>{informationTypeMapping[cat]}</h4>
-                            </div>
-                        ))}
+                        {totalUnread === 0 ? (
+                            <p>No unread notifications.</p>
+                        ) : (
+                            (Object.entries(unreadByType) as [InfoType, number][]).map(([cat, count]) => (
+                                <div key={cat} className="notif-card">
+                                    <h1>{count ?? 0}</h1>
+                                    <h4>{informationTypeMapping[cat]}</h4>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
