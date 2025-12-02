@@ -129,10 +129,10 @@ export const TotalPowerTodayMulti = memo(function TotalPowerTodayMulti({
 
                     <CartesianGrid stroke="#EEEEEE" vertical={false} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={24} minTickGap={60} tick={{fontSize: 12}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12}} />
+                    <YAxis label={{ value: "Energy (Wh)", position: "insideLeft", angle: -90, fontSize: 12 }} axisLine={false} tickLine={false} tick={{fontSize: 12}} />
                     <Tooltip formatter={(val: number) => val.toFixed(2) + " W"} />
 
-                    <Legend verticalAlign="bottom" align="center" wrapperStyle={{ position: "relative" }} />
+                    <Legend verticalAlign="bottom" align="center" wrapperStyle={{ position: "relative", fontSize: 15 }} />
 
                     {compIds.map((id, i) => (
                         <Area

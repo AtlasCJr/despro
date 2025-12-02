@@ -40,6 +40,7 @@ export const PowerMoneyConsumption = memo(function PowerMoneyConsumption({ kWhUs
                         verticalAlign="top"
                         align="center"
                         layout="horizontal"
+                        wrapperStyle={{ position: "relative", fontSize: 15 }}
                     />
                 </PieChart>
             </ResponsiveContainer>

@@ -123,7 +123,7 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
                     verticalAlign="top"
                     align="left"
                     layout="horizontal"
-                    wrapperStyle={{paddingBottom: 12}}
+                    wrapperStyle={{paddingBottom: 12, fontSize: 15}}
                     />
 
                 {/* Bagian sisa sebelum limit (diarsir hijau) */}
