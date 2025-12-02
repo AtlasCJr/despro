@@ -1,0 +1,60 @@
+:root {
+    --aboutMargin: min(2rem, 2vw);
+    --aboutFontSize: max(2rem, 2.5vw);
+}
+
+.about * {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--primaryColor);
+
+    h1 { font-size: var(--h1Size); }
+    h2 { font-size: var(--h2Size); }
+    h3 { font-size: var(--h3Size); }
+}
+
+.about {
+    height: calc(100% - var(--aboutMargin) * 2);
+    width: calc(100% - var(--aboutMargin) * 8);
+    padding: var(--aboutMargin) calc(4 * var(--aboutMargin));
+
+    background-color: var(--aboutMargin);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--aboutFontSize);
+
+    h1 {
+        letter-spacing: -2px;
+        text-align: center;
+        font-size: var(--aboutFontSize);
+    }
+
+    h2 {
+        line-height: 1.1;
+        padding: 0 calc(var(--aboutMargin) * 4);
+        text-align: justify;
+        font-weight: 200;
+        font-size: calc(var(--aboutFontSize) * 0.5);
+    }
+
+    & > div {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--aboutFontSize) / 2);
+    }
+}
+
+@media (max-width: 800px) {
+    :root {
+        --aboutMargin: 1vw;
+    }
+}
+
+@media (max-width: 600px) {
+    .about h2 {
+        text-align: left;
+    }
+}
