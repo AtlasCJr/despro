@@ -1,6 +1,6 @@
 
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend, Tooltip } from 'recharts';
-import type { RawBase } from '../hooks/datastruct';
+import type { RawBase } from '../../hooks/datastruct';
 import { memo, useMemo } from 'react';
 
 

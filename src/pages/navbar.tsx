@@ -3,6 +3,8 @@ import './navbar.scss'
 import { useState } from 'react';
 import { DashboardLogo, ComponentsLogo, NotificationLogo, AboutLogo } from '../assets/icons';
 
+import Logo from "../assets/images/Logo.webp";
+
 type NavbarProps = {
     onChange: (page: number) => void;
 };
@@ -13,14 +15,13 @@ export default function Navbar({ onChange }: NavbarProps) {
     const menuItems = [
         { label: "Dashboard", icon: <DashboardLogo /> },
         { label: "Components", icon: <ComponentsLogo /> },
-        // { label: "Analysis", icon: <AnalysisLogo /> },
         { label: "Notifications", icon: <NotificationLogo />, notifNum: 2, warningNum: 2 },
         { label: "About", icon: <AboutLogo /> }
     ];
 
     return (
         <div className="nav-bar">
-            <img src="/images/Logo.webp" alt="Logo" />
+            <img src={Logo} alt="Logo" />
             
             <ul>
                 <div className={`cursor-selected level-${selected}`} />

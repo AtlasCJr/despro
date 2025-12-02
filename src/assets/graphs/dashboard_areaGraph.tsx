@@ -1,7 +1,7 @@
 import { memo, useEffect, useState, useMemo, useCallback } from "react";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 
 function dayWindowFrom(latestMs?: number) {
     const endMs = latestMs || Date.now();

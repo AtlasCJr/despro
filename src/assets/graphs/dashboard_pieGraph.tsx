@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Tooltip, Legend, Cell, LabelList } from "recharts";
 
-import { Num2Currency } from '../utils/Num2Currency'
+import { Num2Currency } from '../../utils/Num2Currency'
 
 const COLORS = ["#0f766e", "#22c55e", "#eab308", "#f97316", "#ef4444", "#6366f1"];
 

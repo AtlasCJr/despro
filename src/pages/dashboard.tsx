@@ -6,9 +6,9 @@ import type { Unsubscribe } from 'firebase/firestore'
 import { db } from '../firebase'
 
 import { DashboardLogo, ComponentsLogo, UpdateLogo, SumLogo } from '../assets/icons';
-import { TotalPowerTodayMulti } from '../assets/dashboard_areaGraph';
-import { PowerMoneyConsumption } from '../assets/dashboard_pieGraph';
-import { PowerLimitGraph } from '../assets/dashboard_barGraph';
+import { TotalPowerTodayMulti } from '../assets/graphs/dashboard_areaGraph';
+import { PowerMoneyConsumption } from '../assets/graphs/dashboard_pieGraph';
+import { PowerLimitGraph } from '../assets/graphs/dashboard_barGraph';
 import { LastUpdatedLabel } from '../assets/LastUpdatedLabel'
 
 // helpers

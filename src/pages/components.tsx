@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import ComponentChart from "../assets/componentGraph";
+import ComponentChart from "../assets/graphs/componentGraph";
 import { useComponentBundle } from "../hooks/useComponentData";
 import "./components.scss";
 
