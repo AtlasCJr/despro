@@ -1,7 +1,7 @@
 // Dashboard.tsx
 import './dashboard.scss'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { collection, onSnapshot, orderBy, limit, query, getDocs, where, doc } from 'firebase/firestore'
+import { collection, onSnapshot, orderBy, limit, query, getDocs, where, doc, getDoc } from 'firebase/firestore'
 import type { Unsubscribe } from 'firebase/firestore'
 import { db } from '../firebase'
 
@@ -44,6 +44,15 @@ function energyWhFromDocsAscending(docs: any[]): number {
     }
     return wh / 1000;
 }
+
+function todayIdString() {
+    const d = new Date();
+    const Y = d.getFullYear();
+    const M = String(d.getMonth() + 1).padStart(2, "0");
+    const D = String(d.getDate()).padStart(2, "0");
+    return `${Y}-${M}-${D}`;
+}
+
 
 type DashboardProps = {
     onChangePage: (page: number) => void;
@@ -271,29 +280,27 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
             return;
         }
 
-        // ✅ Use *current time* as the end of the window
-        const { startMs, endMs } = dayWindowFromLatest(Date.now());
+        const todayId = todayIdString(); // e.g. "2025-12-08"
 
         (async () => {
-            const queries = compIds.map((compId) => {
-                const q1 = query(
-                    collection(db, "components", compId, "RL1"),
-                    where("ts", ">=", startMs),
-                    where("ts", "<", endMs),
-                    orderBy("ts", "asc")
-                );
+            const queries = compIds.map(async (compId) => {
+                const ref = doc(db, "components", compId, "PL1", todayId);
+                const snap = await getDoc(ref);
 
-                return getDocs(q1).then((snap) => {
-                    const arr = snap.docs.map(d => d.data());
-                    const Wh = energyWhFromDocsAscending(arr) || 0;
+                const compName =
+                    compMeta[compId]?.name ??
+                    latestRL1[compId]?.name ??
+                    compId;
 
-                    const compName =
-                        compMeta[compId]?.name ??
-                        latestRL1[compId]?.name ??
-                        compId;
+                if (!snap.exists()) {
+                    return { compName, Wh: 0 };
+                }
 
-                    return { compName, Wh };
-                });
+                const d = snap.data() as any;
+                // adjust if your field name / units differ
+                const Wh = typeof d.totEnergy === "number" ? d.totEnergy : 0;
+
+                return { compName, Wh };
             });
 
             const results = await Promise.all(queries);
@@ -307,11 +314,8 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
             }
 
             setEnergyTodayWhPerComponent(map);
-        })().catch((err) => console.error("energyTodayWh calc error:", err));
+        })().catch((err) => console.error("energyTodayWh (PL1) calc error:", err));
     }, [compIds, compMeta, latestRL1]);
-
-
-
 
     useEffect(() => {
         const qUnreadAll = query(
@@ -416,12 +420,7 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
                             usageRows.length === 0 ? (
                                 <p>No data for today.</p>
                             ) : (
-                                <TotalPowerTodayMulti
-                                    compIds={compIds}
-                                    latestTs={latestTs}
-                                    compLabels={compLabels}
-                                    stacked={true}
-                                />
+                                <PowerMoneyConsumption WhUsagePerComponent={energyTodayWhPerComponent}/>
                             )
                         )}
                     </div>
