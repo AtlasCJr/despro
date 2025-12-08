@@ -258,7 +258,7 @@ function ComponentChartInner({ data, toggleVar, toggleAxis }: ComponentChartProp
                         }}
                         tickFormatter={(v: number) => v.toFixed(2)}
                         domain={[
-                            (min: number) => Math.max(0, min * 0.9),
+                            (min: number) => 0,
                             (max: number) => max * 1.1,
                         ]}
                         axisLine={false}
@@ -279,7 +279,7 @@ function ComponentChartInner({ data, toggleVar, toggleAxis }: ComponentChartProp
                         }}
                         tickFormatter={(v: number) => v.toFixed(0)}
                         domain={[
-                            (min: number) => min - 2,
+                            (min: number) => 0,
                             (max: number) => max + 2,
                         ]}
                         axisLine={false}
@@ -299,7 +299,7 @@ function ComponentChartInner({ data, toggleVar, toggleAxis }: ComponentChartProp
                         }}
                         tickFormatter={(v: number) => v.toFixed(1)}
                         domain={[
-                            (min: number) => (min >= 0 ? 0 : min * 1.1),
+                            (min: number) => 0,
                             (max: number) => max * 1.1,
                         ]}
                         axisLine={false}
