@@ -10,6 +10,7 @@ import { TotalPowerTodayMulti } from '../assets/graphs/dashboard_areaGraph';
 import { PowerMoneyConsumption } from '../assets/graphs/dashboard_pieGraph';
 import { PowerLimitGraph } from '../assets/graphs/dashboard_barGraph';
 import { LastUpdatedLabel } from '../assets/LastUpdatedLabel'
+import { formatPower } from '../hooks/formatPower'
 
 // helpers
 function dayWindowFromLatest(latestMs: number) {
@@ -351,7 +352,7 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
                         <ComponentsLogo />
                     </div>
                     <div>
-                        <h1>{Math.round(powerNow)} W</h1>
+                        <h1>{powerNow} W</h1>
                     </div>
                 </div>
 
@@ -361,7 +362,7 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
                         <SumLogo />
                     </div>
                     <div>
-                        <h1>{energyTodayWh} Wh</h1>
+                        <h1>{formatPower(energyTodayWh, "Wh")}</h1>
                     </div>
                 </div>
 
@@ -398,7 +399,7 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
                             <div key={compId} className="usage-row">
                                 <h3>{data?.name ?? compId}</h3>
                                 <h3>{data?.type ?? compId}</h3>
-                                <h3>{power.toFixed(2)} W</h3>
+                                <h3>{formatPower(power, "W")}</h3>
                                 <h3>{pct.toFixed(2)} %</h3>
                             </div>
                             ))
