@@ -165,6 +165,44 @@
         }
     }
 
+    .div7 {
+        &.no-data {
+            display: block;
+            p { 
+                text-align: center; width: 100%;
+            }
+
+            & > div:last-child {
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        }
+    }
+
+    .div6 {
+        &.no-data {
+            display: block;
+            p { 
+                text-align: center; width: 100%;
+            }
+
+            & > div:last-child {
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        }
+    }
+
+    .div6:not(.no-data), .div7:not(.no-data) {
+        & > div:last-child {
+            height: 100%;
+        }
+    }
+
     .div5 {
         & > div:first-of-type {
             padding-bottom: 1rem;
@@ -204,6 +242,21 @@
         div.usage-row {
             padding: 0 !important;
             * { font-size: .8rem !important; }
+        }
+
+        &.no-data {
+            display: block;
+            p { 
+                text-align: center; width: 100%;
+                margin-bottom: 4rem;
+            }
+
+            & > div:last-child {
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
         }
     }
 

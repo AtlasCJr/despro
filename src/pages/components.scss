@@ -209,9 +209,19 @@
 
         .chart { width: 100%; height: 100%; }
 
-        .skeleton, .empty {
-            font-size: 2rem;
-            font-weight: 300;
+        &.temp {
+            height: 50%;
+
+            .skeleton, .empty {
+                font-size: 2rem;
+                font-weight: 300;
+                height: 100%;
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding-bottom: 5rem;
+            }
         }
     }
 

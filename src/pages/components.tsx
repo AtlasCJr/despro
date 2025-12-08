@@ -5,8 +5,9 @@ import { useComponentBundle } from "../hooks/useComponentData";
 import "./components.scss";
 
 import { Num2Currency } from "../utils/Num2Currency";
+import { formatPower } from "../hooks/formatPower";
 
-import { RestartLogo, DeleteLogo, LimitLogo, PowerLogo } from "../assets/icons";
+import { RestartLogo, DeleteLogo, LimitLogo, PowerLogo, ResizeLogo } from "../assets/icons";
 
 type Layer = "RL1" | "RL2" | "RL3" | "RL4" | "PL1" | "PL2" | "PL3" | "PL4" | "PL5";
 
@@ -33,7 +34,6 @@ const ASSET_MAP: Record<number, string> = {
     3: "asset4", 
     4: "asset5",
 }
-
 
 interface ModalProps {
     isOpen: boolean;
@@ -79,6 +79,39 @@ function NoticePopup({ isOpen, onClose, children, customClassName }: ModalProps)
     );
 }
 
+function getWindowForScale(scale: number) {
+    const now = Date.now();
+    const d = new Date(now);
+
+    switch (scale) {
+        case 0: { // Today
+            d.setHours(0, 0, 0, 0);
+            return { sinceTs: d.getTime(), untilTs: now };
+        }
+        case 1: { // This Week (Mon → now)
+            const day = d.getDay();           // 0 = Sun, 1 = Mon, ...
+            const diffToMonday = (day + 6) % 7;
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() - diffToMonday);
+            return { sinceTs: d.getTime(), untilTs: now };
+        }
+        case 2: { // This Month
+            d.setDate(1);
+            d.setHours(0, 0, 0, 0);
+            return { sinceTs: d.getTime(), untilTs: now };
+        }
+        case 3: { // This Year
+            d.setMonth(0, 1);                 // Jan 1
+            d.setHours(0, 0, 0, 0);
+            return { sinceTs: d.getTime(), untilTs: now };
+        }
+        case 4:  // All Time → no lower bound, only use "now" as end
+        default:
+            return { sinceTs: undefined, untilTs: now };
+    }
+}
+
+
 export default function Components() {
     const [selected, setSelected] = useState<number>(0);
     const [scaleSelected, setScaleSelected] = useState<number>(0);
@@ -93,21 +126,29 @@ export default function Components() {
     const include = useMemo<Layer[]>(() => [activeLayer, activeProcessedLayer], [activeLayer, activeProcessedLayer]);
     const activeAsset = useMemo(() => ASSET_MAP[selected], [selected]);
 
-    const { component, layers, loading, error, toggleOnOff, changePowerLimit, changeName, changeType } = useComponentBundle(activeAsset, {
-        include: include,
-        order: "asc",
-        limitPerLayer: 1000
-    });
-    
-    // if (component) console.log(component)
-    // if (layers) console.log(layers)
+    const timeWindow = useMemo(
+        () => getWindowForScale(scaleSelected),
+        [scaleSelected]
+    );
+
+    const { sinceTs, untilTs } = timeWindow;
+
+    const { component, layers, loading, error, toggleOnOff, changePowerLimit, changeName, changeType } =
+        useComponentBundle(activeAsset, {
+            include,
+            order: "asc",
+            limitPerLayer: 1000,
+            ...(sinceTs !== undefined ? { sinceTs } : {}),
+            untilTs,          // end of window is always "now"
+        });
+
 
     const [showPopup, setShowPopup] = useState([false, false, false, false]);
     const [tempName, setTempName] = useState<string>("");
     const [tempType, setTempType] = useState<string>("");
     const [tempLimit, setTempLimit] = useState(0);
 
-    const RpPerkWh = 1699.53
+    const RpPerWh = 1699.53 / 1000
 
     // inside Components()
     const processedRows = (layers?.[activeProcessedLayer] ?? []) as Array<Record<string, any>>;
@@ -115,11 +156,9 @@ export default function Components() {
 
     // Optional fallbacks:
     const durationH   = plSummary?.duration ?? 0;        // hours
-    const usedKWh     = plSummary?.usedPower ?? plSummary?.energy_kWh ?? 0;
-    const avgKWh      = plSummary?.averageUsage ?? 0;    // Wh/h (or your schema)
-    const peakKW      = plSummary?.peakUsage ?? 0;       // W
-    const hasTripped  = !!plSummary?.hasTripped;
-    const tripCount   = plSummary?.numTripped ?? 0;
+    const usedWh     = plSummary?.totEnergy ?? 0;
+    const avgWh      = plSummary?.avgEnergy ?? 0;    // Wh/h (or your schema)
+    const peakKW      = plSummary?.peakEnergy ?? 0;       // W
 
     const maxSocket = 4
 
@@ -177,6 +216,33 @@ export default function Components() {
                             <PowerLogo />
                         </div>
                     </div>
+
+                    {/* <div>
+                        <div onClick={() => {setShowPopup([false, false, true, false])}}>
+                            <ResizeLogo />
+                        </div>
+
+                        <NoticePopup customClassName="delete" isOpen={showPopup[2]} onClose={() => setShowPopup(Array(4).fill(false))}>
+                            <h2>Confirm Deletion</h2>
+                            <p>
+                                Are you sure you want to delete all data shown from <b>{component?.name}</b>
+                            </p>
+                            <div className="modal-actions">
+                                <button className="btn secondary" onClick={() => {
+                                    // setTempName("");
+                                    setShowPopup(Array(4).fill(false));
+                                }}
+                                > Cancel </button>
+                                <button className="btn primary" onClick={() => {
+                                    // componentData[selected].name = tempName
+                                    // setTempName("")
+                                    setShowPopup(Array(4).fill(false));
+                                }}
+                                > Delete </button>
+                            </div>
+                        </NoticePopup>
+                    </div> */}
+
                     <div>
                         <div onClick={() => {setShowPopup([false, true, false, false])}}>
                             <LimitLogo />
@@ -201,7 +267,7 @@ export default function Components() {
                                 />
                                 <h2 className="change-power-text">Wh</h2>
                                 <h2 className="change-power-text">=</h2>
-                                <h2 className="change-power-text">{Num2Currency(tempLimit * RpPerkWh)}</h2>
+                                <h2 className="change-power-text">{Num2Currency(tempLimit * RpPerWh)}</h2>
                             </div>
 
                             <div className="modal-actions">
@@ -354,17 +420,17 @@ export default function Components() {
                         </div>
                         <div>
                             <h3>Used Energy</h3>
-                            <h3>{loading ? "Loading..." : `${Number(usedKWh).toFixed(3)} Wh`}</h3>
-                            <h3>{loading ? "Loading..." : Num2Currency(Number(usedKWh) * RpPerkWh)}</h3>
+                            <h3>{loading ? "Loading..." : `${formatPower(usedWh, "Wh")}`}</h3>
+                            <h3>{loading ? "Loading..." : Num2Currency(Number(usedWh) * RpPerWh)}</h3>
                         </div>
                         <div>
                             <h3>Average Usage</h3>
-                            <h3>{loading ? "Loading..." : `${Number(avgKWh).toFixed(3)} Wh/h`}</h3>
-                            <h3>{loading ? "Loading..." : Num2Currency(Number(avgKWh) * RpPerkWh)}</h3>
+                            <h3>{loading ? "Loading..." : `${formatPower(usedWh, "W")}`}</h3>
+                            <h3>{loading ? "Loading..." : Num2Currency(Number(avgWh) * RpPerWh) + "/h"}</h3>
                         </div>
                         <div>
                             <h3>Peak Power</h3>
-                            <h3>{loading ? "Loading..." : `${Number(peakKW).toFixed(3)} W`}</h3>
+                            <h3>{loading ? "Loading..." : `${formatPower(usedWh, "W")}`}</h3>
                         </div>
                         <div>
                             <h3>Limited</h3>
@@ -380,17 +446,17 @@ export default function Components() {
                                         : "-")}
                             </h3>
                                 {loading ? "" : (Number.isFinite(component?.info?.powerLimit) && (
-                                    <h3>{Num2Currency(Math.round(component?.info?.powerLimit as number * RpPerkWh))}</h3>
+                                    <h3>{Num2Currency(Math.round(component?.info?.powerLimit as number * RpPerWh))}</h3>
                                 ))}
                         </div>
-                        <div>
+                        {/* <div>
                             <h3>Has Tripped</h3>
                             <h3>{loading ? "Loading..." : (hasTripped ? "True" : "False")}</h3>
                         </div>
                         <div>
                             <h3>Trip Count</h3>
                             <h3>{loading ? "Loading..." : Number(tripCount)}</h3>
-                        </div>
+                        </div> */}
                         <div>
                             <h3>Status</h3>
                             <h3>{loading ? "Loading..." : (component?.info.isOn ? "On" : "Off")}</h3>
@@ -398,17 +464,20 @@ export default function Components() {
                     </div>
                 </div>
 
-                <div className="graph">
+                <div className={`graph ${layers[activeLayer].length <= 0 || loading || error ? "temp" : ""}`}>
                     {loading ? (
                         <div className="skeleton">Loading chart...</div>
-                    ) : layers[activeLayer].length > 0 ? (
-                        <ComponentChart data={layers[activeLayer]} toggleVar={toggleVar} toggleAxis={lastToggledAxis} />
-                    ) : !error  ? (
+                    ) : error ? (
                         <div className="empty">Error in retrieving data from database.</div>
-                    ): (
-                        <div className="empty">No data available.</div>
-                    ) 
-                    }
+                    ) : layers[activeLayer].length > 0 ? (
+                        <ComponentChart
+                        data={layers[activeLayer]}
+                        toggleVar={toggleVar}
+                        toggleAxis={lastToggledAxis}
+                        />
+                    ) : (
+                        <div className="empty">No data available for this period.</div>
+                    )}
                 </div>
 
                 <div className="show-graph">

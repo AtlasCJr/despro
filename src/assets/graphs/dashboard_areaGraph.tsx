@@ -4,7 +4,8 @@ import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tool
 import { db } from "../../firebase";
 
 function dayWindowFrom(latestMs?: number) {
-    const endMs = latestMs || Date.now();
+    // const endMs = latestMs || Date.now();
+    const endMs = Date.now();
     const d = new Date(endMs);
     d.setHours(0, 0, 0, 0);
     return { startMs: d.getTime(), endMs };
@@ -66,9 +67,14 @@ export const TotalPowerTodayMulti = memo(function TotalPowerTodayMulti({
         const minutes = Array.from(bucket.keys()).sort((a, b) => a - b);
 
         const rows: Row[] = minutes.map((t) => {
-            const row: Row = {
-                name: new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            };
+            const label = new Date(t).toLocaleTimeString("id-ID", {
+                timeZone: "Asia/Jakarta",   // ⬅️ force WIB
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,              // 24-hour format, remove if you like 12-hour
+            });
+
+            const row: Row = { name: label };
 
             const vals = bucket.get(t) ?? {};
             for (const id of compIds) row[id] = vals[id] ?? 0;
@@ -130,7 +136,7 @@ export const TotalPowerTodayMulti = memo(function TotalPowerTodayMulti({
                     <CartesianGrid stroke="#EEEEEE" vertical={false} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={24} minTickGap={60} tick={{fontSize: 12}} />
                     <YAxis label={{ value: "Energy (Wh)", position: "insideLeft", angle: -90, fontSize: 12 }} axisLine={false} tickLine={false} tick={{fontSize: 12}} />
-                    <Tooltip formatter={(val: number) => val.toFixed(2) + " W"} />
+                    <Tooltip formatter={(val: number) => val.toFixed(2) + " W"} contentStyle={{fontSize: 12}} />
 
                     <Legend verticalAlign="bottom" align="center" wrapperStyle={{ position: "relative", fontSize: 15 }} />
 

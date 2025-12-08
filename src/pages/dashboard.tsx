@@ -1,7 +1,7 @@
 // Dashboard.tsx
 import './dashboard.scss'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { collection, onSnapshot, orderBy, limit, query, getDocs, where } from 'firebase/firestore'
+import { collection, onSnapshot, orderBy, limit, query, getDocs, where, doc } from 'firebase/firestore'
 import type { Unsubscribe } from 'firebase/firestore'
 import { db } from '../firebase'
 
@@ -21,7 +21,14 @@ function dayWindowFromLatest(latestMs: number) {
     return { startMs: start, endMs: end };
 }
 
-function energyKWhFromDocsAscending(docs: any[]): number {
+function startOfTodayMs() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+}
+
+
+function energyWhFromDocsAscending(docs: any[]): number {
     if (!docs.length) return 0;
 
     let wh = 0;
@@ -38,17 +45,23 @@ function energyKWhFromDocsAscending(docs: any[]): number {
     return wh / 1000;
 }
 
+type DashboardProps = {
+    onChangePage: (page: number) => void;
+};
 
-export default function Dashboard() {
-    const [energyTodayKWh, setEnergyTodayKWh] = useState<number>(0);
-    const [energyTodaykWhPerComponent, setEnergyTodayKWhPerComponent] = useState<Record<string, number>>({});
+export default function Dashboard({ onChangePage }: DashboardProps) {
+    const [energyTodayWh, setEnergyTodayWh] = useState<number>(0);
+    const [energyTodayWhPerComponent, setEnergyTodayWhPerComponent] = useState<Record<string, number>>({});
 
     const [latestRL1, setLatestRL1] = useState<Record<string, any>>({});
+    const [assetIsOn, setAssetIsOn] = useState<Record<string, boolean>>({});
     const subUnsubsRef = useRef<Map<string, Unsubscribe>>(new Map());
-    const [compMeta, setCompMeta] = useState<Record<string, { name: string, type?: string, limitKWh?: number }>>({});
+    const [compMeta, setCompMeta] = useState<Record<string, { name: string, type?: string, limitWh?: number }>>({});
     const [div6Chosen, setDiv6Chosen] = useState<"limit" | "usage">("limit");
 
     const [unreadByType, setUnreadByType] = useState<Partial<Record<InfoType, number>>>({});
+
+    const todayStartMs = useMemo(() => startOfTodayMs(), []);
 
     const informationTypeMapping = {
         0: "Normal",
@@ -69,69 +82,127 @@ export default function Dashboard() {
 
         // Put this near your other useMemos
     const powerLimitData = useMemo(() => {
-    return compIds.map((compId) => {
-        const meta = compMeta[compId];
-        const name = meta?.name ?? compId;
+        return compIds.map((compId) => {
+            const meta = compMeta[compId];
+            const name = meta?.name ?? compId;
 
-        // ⚠️ You stored per-component kWh with NAME keys, so use that
-        const usedKWh = energyTodaykWhPerComponent[name] ?? 0;
+            const usedWh = energyTodayWhPerComponent[name] ?? 0;
 
-        const limitKWh = meta?.limitKWh ?? 0;
+            const limitWh = meta?.limitWh ?? 0;
 
-        return {
-        id: compId,
-        name,
-        usedKWh,
-        limitKWh,
-        };
-    });
-        }, [compIds, compMeta, energyTodaykWhPerComponent]);
+            return {
+                id: compId,
+                name,
+                usedWh,
+                limitWh,
+            };
+        });
+    }, [compIds, compMeta, energyTodayWhPerComponent]);
 
-
+    const onlineCount = useMemo(() => {
+        // assetIsOn = { asset1: true, asset2: false, ... }
+        return Object.values(assetIsOn).filter(Boolean).length;
+    }, [assetIsOn]);
 
     type InfoType = keyof typeof informationTypeMapping;
 
     const totalPower = useMemo(() => {
         return Object.values(latestRL1).reduce((sum, d: any) => {
-            const p = typeof d?.["daya-aktif"] === "number" ? d["daya-aktif"] : 0;
+            if (!d) return sum;
+            const ts = typeof d.ts === "number" ? d.ts : 0;
+            if (ts < todayStartMs) return sum;           // ⬅️ ignore old samples
+
+            const p = typeof d["daya-aktif"] === "number" ? d["daya-aktif"] : 0;
             return sum + p;
         }, 0);
-    }, [latestRL1]);
+    }, [latestRL1, todayStartMs]);
+
 
     const totalUnread = Object.values(unreadByType).reduce(
         (sum, val) => sum + (val ?? 0),
         0
     );
 
-    const { powerNow, onlineCount, latestTimestamp } = useMemo(() => {
+    const { powerNow, latestTimestamp } = useMemo(() => {
         let p = 0;
-        let c = 0;
         let last = 0;
 
         for (const data of Object.values(latestRL1) as any[]) {
             if (!data) continue;
 
-            if (typeof data["daya-aktif"] === "number") p += data["daya-aktif"];
+            const ts = typeof data.ts === "number" ? data.ts : 0;
 
-            if (data.isOn) c++;
+            // last ever (for LastUpdatedLabel)
+            if (ts && ts > last) last = ts;
 
-            if (data.ts && data.ts > last) last = data.ts;
+            // current power: only today
+            if (ts >= todayStartMs && typeof data["daya-aktif"] === "number") {
+                p += data["daya-aktif"];
+            }
         }
 
-        return { powerNow: p, onlineCount: c, latestTimestamp: last };
+        return { powerNow: p, latestTimestamp: last };
+    }, [latestRL1, todayStartMs]);
 
-    }, [latestRL1]);
+    const usageRows = useMemo(() => {
+    // only components with data today
+    const entriesToday = Object.entries(latestRL1).filter(
+        ([, data]: [string, any]) =>
+            data && typeof data.ts === "number" && data.ts >= todayStartMs
+    );
+
+    const total = entriesToday.reduce((sum, [, data]: [string, any]) => {
+        const p = typeof data["daya-aktif"] === "number" ? data["daya-aktif"] : 0;
+        return sum + p;
+    }, 0);
+
+    return entriesToday
+        .sort(([, a]: any, [, b]: any) => (b?.["daya-aktif"] ?? 0) - (a?.["daya-aktif"] ?? 0))
+        .map(([compId, data]: [string, any]) => {
+            const power = typeof data?.["daya-aktif"] === "number" ? data["daya-aktif"] : 0;
+            const pct = total > 0 ? (power / total) * 100 : 0;
+            return { compId, data, power, pct };
+        });
+}, [latestRL1, todayStartMs]);
+
+
 
     const latestTs = latestTimestamp;
+
+    useEffect(() => {
+        const assetIds = ["asset1", "asset2", "asset3", "asset4"];
+
+        const unsubs = assetIds.map((assetId) =>
+            onSnapshot(
+                doc(db, "components", assetId),
+                (snap) => {
+                    const data = snap.data() as any | undefined;
+                    const on = !!data?.info.isOn;
+
+                    setAssetIsOn((prev) => ({
+                        ...prev,
+                        [assetId]: on,
+                    }));
+                },
+                (err) => {
+                    console.error(`asset listener error for ${assetId}:`, err.code, err.message);
+                }
+            )
+        );
+
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    }, []);
 
     useEffect(() => {
         // 1) listen components list
         const compsUnsub = onSnapshot(collection(db, "components"),
             (snap) => {
-                const meta: Record<string, { name: string; type?: string; limitKWh?: number }> = {};
+                const meta: Record<string, { name: string; type?: string; limitWh?: number }> = {};
                 snap.docs.forEach((doc) => {
                     const d = doc.data();
-                    meta[doc.id] = { name: d.name ?? doc.id, type: d.type ?? "Unknown", limitKWh: typeof d.info.powerLimit === "number" ? d.info.powerLimit : 0,};
+                    meta[doc.id] = { name: d.name ?? doc.id, type: d.type ?? "Unknown", limitWh: typeof d.info.powerLimit === "number" ? d.info.powerLimit : 0,};
                 });
                 setCompMeta(meta);
 
@@ -195,15 +266,15 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (compIds.length === 0) {
-            setEnergyTodayKWh(0);
-            setEnergyTodayKWhPerComponent({});
+            setEnergyTodayWh(0);
+            setEnergyTodayWhPerComponent({});
             return;
         }
 
-        const { startMs, endMs } = dayWindowFromLatest(latestTs);
+        // ✅ Use *current time* as the end of the window
+        const { startMs, endMs } = dayWindowFromLatest(Date.now());
 
         (async () => {
-            // 1️⃣ Build queries only (no await inside loop)
             const queries = compIds.map((compId) => {
                 const q1 = query(
                     collection(db, "components", compId, "RL1"),
@@ -212,37 +283,33 @@ export default function Dashboard() {
                     orderBy("ts", "asc")
                 );
 
-                // return the promise, NOT awaiting here
                 return getDocs(q1).then((snap) => {
                     const arr = snap.docs.map(d => d.data());
-                    const kWh = energyKWhFromDocsAscending(arr) || 0;
+                    const Wh = energyWhFromDocsAscending(arr) || 0;
 
                     const compName =
                         compMeta[compId]?.name ??
                         latestRL1[compId]?.name ??
                         compId;
 
-                    return { compName, kWh };
+                    return { compName, Wh };
                 });
             });
 
-            // 2️⃣ Execute ALL Firestore fetches in parallel
             const results = await Promise.all(queries);
 
-            // 3️⃣ Total energy
-            const total = results.reduce((sum, r) => sum + r.kWh, 0);
-            setEnergyTodayKWh(Number(total.toFixed(3)));
+            const total = results.reduce((sum, r) => sum + r.Wh, 0);
+            setEnergyTodayWh(Number(total.toFixed(3)));
 
-            // 4️⃣ Per component map
             const map: Record<string, number> = {};
-            for (const { compName, kWh } of results) {
-                map[compName] = Number(kWh.toFixed(3));
+            for (const { compName, Wh } of results) {
+                map[compName] = Number(Wh.toFixed(3));
             }
 
-            setEnergyTodayKWhPerComponent(map);
-            
-        })().catch((err) => console.error("energyTodayKWh calc error:", err));
-    }, [latestTs, latestRL1]);
+            setEnergyTodayWhPerComponent(map);
+        })().catch((err) => console.error("energyTodayWh calc error:", err));
+    }, [compIds, compMeta, latestRL1]);
+
 
 
 
@@ -290,17 +357,17 @@ export default function Dashboard() {
                         <SumLogo />
                     </div>
                     <div>
-                        <h1>{energyTodayKWh} kWh</h1>
+                        <h1>{energyTodayWh} Wh</h1>
                     </div>
                 </div>
 
                 <div className='div3'>
                     <div>
-                        <h2>Connections Online</h2>
+                        <h2>Connections Active</h2>
                         <DashboardLogo />
                     </div>
                     <div>
-                        <h1>{onlineCount}/4</h1>
+                        <h1>{onlineCount}/3</h1>
                     </div>
                 </div>
 
@@ -314,33 +381,28 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                <div className='div5'>
+                <div className={`div5 ${usageRows.length === 0 ? "no-data" : ""}`}>
                     <div>
                         <h2>Usage Percentage</h2>
-                        <h2 className='view-all'>View All</h2>
+                        <h2 className='view-all' onClick={() => onChangePage(1)}>View All</h2>
                     </div>
                     <div>
-                    {Object.entries(latestRL1)
-                        .sort(([, a]: any, [, b]: any) => (b?.["daya-aktif"] ?? 0) - (a?.["daya-aktif"] ?? 0))
-                        .map(([compId, data]: [string, any]) => {
-                            const power = typeof data?.["daya-aktif"] === "number" ? data["daya-aktif"] : 0;
-                            const pct = totalPower > 0 ? (power / totalPower) * 100 : 0;
-
-                            return (
-                                <div key={compId} className="usage-row">
-                                    {/* <ComponentsLogo /> */}
-                                    <h3>{data?.name ?? compId}</h3>
-                                    <h3>{data?.type ?? compId}</h3>
-                                    <h3>{power.toFixed(2)} W</h3>
-                                    <h3>{pct.toFixed(2)} %</h3>
-                                </div>
-                            );
-                        })
-                    }
+                        {usageRows.length === 0 ? (
+                            <p>No data for today.</p>
+                        ) : (
+                            usageRows.map(({ compId, data, power, pct }) => (
+                            <div key={compId} className="usage-row">
+                                <h3>{data?.name ?? compId}</h3>
+                                <h3>{data?.type ?? compId}</h3>
+                                <h3>{power.toFixed(2)} W</h3>
+                                <h3>{pct.toFixed(2)} %</h3>
+                            </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
-                <div className='div6'>
+                <div className={`div6 ${usageRows.length === 0 ? "no-data" : ""}`}>
                     <div>
                         <h2>Component Usage (Today)</h2>
                         <div>
@@ -348,24 +410,43 @@ export default function Dashboard() {
                             <h2 className={`${div6Chosen === "usage" ? "selected" : ""}`} onClick={() => {setDiv6Chosen("usage")}}>Usage</h2>
                         </div>
                     </div>
-                    {(div6Chosen === "limit") ? <PowerLimitGraph data={powerLimitData} /> : <></>}
-                    {(div6Chosen === "usage") ? <PowerMoneyConsumption kWhUsagePerComponent={energyTodaykWhPerComponent} /> : <></>}
+                    <div>
+                        {(div6Chosen === "limit") ? <PowerLimitGraph data={powerLimitData} /> : <></>}
+                        {div6Chosen === "usage" && (
+                            usageRows.length === 0 ? (
+                                <p>No data for today.</p>
+                            ) : (
+                                <TotalPowerTodayMulti
+                                    compIds={compIds}
+                                    latestTs={latestTs}
+                                    compLabels={compLabels}
+                                    stacked={true}
+                                />
+                            )
+                        )}
+                    </div>
                 </div>
 
-                <div className='div7'>
+                <div className={`div7 ${usageRows.length === 0 ? "no-data" : ""}`}>
                     <h2>Electric Consumption (Today)</h2>
-                    <TotalPowerTodayMulti
-                        compIds={compIds}
-                        latestTs={latestTs}
-                        compLabels={compLabels}
-                        stacked={true}
-                    />
+                    <div>
+                        {usageRows.length === 0 ? (
+                            <p>No data for today.</p>
+                        ) : (
+                            <TotalPowerTodayMulti
+                                compIds={compIds}
+                                latestTs={latestTs}
+                                compLabels={compLabels}
+                                stacked={true}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 <div className='div8'>
                     <div>
                         <h2>Unread Notifications</h2>
-                        <h2 className='view-all'>View All</h2>
+                        <h2 className='view-all' onClick={() => onChangePage(2)}>View All</h2>
                     </div>
 
                     <div>

@@ -5,19 +5,29 @@ import { memo, useMemo } from 'react';
 
 
 // 1) Make the parser accept "YYYY-MM-DD", "YYYY-MM-DDTHH", "YYYY-MM-DDTHH:MM", "YYYY-MM-DDTHH:MM:SS"
+
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
 function IDToDate(id?: string): number | null {
     if (!id || typeof id !== "string") return null;
 
     const [datePart, timePartRaw = ""] = id.split("T");
     const [Y, M, D] = (datePart || "").split("-").map(Number);
 
-    const tPieces = timePartRaw.split(":").map(Number).filter(n => !Number.isNaN(n));
+    const tPieces = timePartRaw
+        .split(":")
+        .map((s) => Number(s))
+        .filter((n) => !Number.isNaN(n));
+
     const HH = tPieces[0] ?? 0;
     const MM = tPieces[1] ?? 0;
     const SS = tPieces[2] ?? 0;
 
-    if ([Y, M, D, HH, MM, SS].some(n => Number.isNaN(n))) return null;
-    return Date.UTC(Y, (M ?? 1) - 1, D ?? 1, HH, MM, SS);
+    if ([Y, M, D, HH, MM, SS].some((n) => Number.isNaN(n))) return null;
+
+    // ID string is WIB -> convert to **UTC epoch**
+    const utcMs = Date.UTC(Y, (M ?? 1) - 1, D ?? 1, HH, MM, SS) - WIB_OFFSET_MS;
+    return utcMs;
 }
 
 function makeTimeFormatter(spanMs: number, stepMs: number) {
@@ -29,14 +39,30 @@ function makeTimeFormatter(spanMs: number, stepMs: number) {
     const ONE_MO = 30 * ONE_D;
 
     if (spanMs <= 2 * ONE_D) {
-        return (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        return (ms: number) =>
+            new Date(ms).toLocaleTimeString("id-ID", {
+                timeZone: "Asia/Jakarta",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+            });
     }
 
     if (spanMs <= 2 * ONE_MO) {
-        return (ms: number) => new Date(ms).toLocaleDateString([], { day: "2-digit", month: "short" });
+        return (ms: number) =>
+            new Date(ms).toLocaleDateString("id-ID", {
+                timeZone: "Asia/Jakarta",
+                day: "2-digit",
+                month: "short",
+            });
     }
 
-    return (ms: number) => new Date(ms).toLocaleDateString([], { month: "short", year: "numeric" });
+    return (ms: number) =>
+        new Date(ms).toLocaleDateString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            month: "short",
+            year: "numeric",
+        });
 }
 
 
@@ -50,45 +76,106 @@ interface ComponentChartProps {
 
 // 👇 wrap in memo at the bottom
 function ComponentChartInner({ data, toggleVar, toggleAxis }: ComponentChartProps) {
-    // 🔹 1. Parse + sort data only when `data` changes
     const chartData = useMemo(
         () =>
-        data
-            .map((d) => {
-            const t = IDToDate(d.id);
-            if (t === null) return null;
+            data
+                .map((d) => {
+                    const t = IDToDate(d.id);
+                    if (t === null) return null;
 
-            const dayaAktif = d["daya-aktif"] as number;
-            const dayaReaktif = d["daya-reaktif"] as number;
-            const dayaKompleks = d["daya-kompleks"] as number;
-            const faktorDaya = d["faktor-daya"] as number;
+                    const dayaAktif = d["daya-aktif"] as number;
+                    const dayaReaktif = d["daya-reaktif"] as number;
+                    const dayaKompleks = d["daya-kompleks"] as number;
+                    const faktorDaya = d["faktor-daya"] as number;
 
-            return {
-                t,
-                arus: d.arus,
-                tegangan: d.tegangan,
-                dayaAktif,
-                dayaReaktif,
-                dayaKompleks,
-                faktorDaya,
-            };
-            })
-            .filter(
-            (
-                x
-            ): x is {
-                t: number;
-                arus: number;
-                tegangan: number;
-                dayaAktif: number;
-                dayaReaktif: number;
-                dayaKompleks: number;
-                faktorDaya: number;
-            } => !!x
-            )
-            .sort((a, b) => a.t - b.t),
+                    return {
+                        t,
+                        arus: d.arus,
+                        tegangan: d.tegangan,
+                        dayaAktif,
+                        dayaReaktif,
+                        dayaKompleks,
+                        faktorDaya,
+                    };
+                })
+                .filter(
+                    (
+                        x
+                    ): x is {
+                        t: number;
+                        arus: number;
+                        tegangan: number;
+                        dayaAktif: number;
+                        dayaReaktif: number;
+                        dayaKompleks: number;
+                        faktorDaya: number;
+                    } => !!x
+                )
+                .sort((a, b) => a.t - b.t),
         [data]
     );
+
+    // 🔹 1b. Build dataset for the *chart* that drops to 0 when there is no data
+    const chartDataWithGaps = useMemo(() => {
+        if (chartData.length <= 1) return chartData;
+
+        // 1) Estimate "normal" step between points
+        let sumDt = 0;
+        let cnt = 0;
+        for (let i = 1; i < chartData.length; i++) {
+            const dt = chartData[i].t - chartData[i - 1].t;
+            if (dt > 0) {
+                sumDt += dt;
+                cnt++;
+            }
+        }
+        const avgStep = cnt > 0 ? sumDt / cnt : 0;
+
+        // 2) Define gap threshold:
+        //    - normally: 3x the average step
+        //    - but at least 10 minutes so Today view still works nicely
+        const MIN_GAP_MS = 10 * 60 * 1000;
+        const GAP_MS = avgStep > 0 ? Math.max(avgStep * 3, MIN_GAP_MS) : MIN_GAP_MS;
+
+        const out = [chartData[0]];
+        for (let i = 1; i < chartData.length; i++) {
+            const prev = chartData[i - 1];
+            const cur = chartData[i];
+            const dt = cur.t - prev.t;
+
+            if (dt > GAP_MS) {
+                // point just after previous -> drop to 0
+                out.push({
+                    ...prev,
+                    t: prev.t + 1,
+                    arus: 0,
+                    tegangan: 0,
+                    dayaAktif: 0,
+                    dayaReaktif: 0,
+                    dayaKompleks: 0,
+                    faktorDaya: 0,
+                });
+
+                // point just before current -> still 0
+                out.push({
+                    ...cur,
+                    t: cur.t - 1,
+                    arus: 0,
+                    tegangan: 0,
+                    dayaAktif: 0,
+                    dayaReaktif: 0,
+                    dayaKompleks: 0,
+                    faktorDaya: 0,
+                });
+            }
+
+            out.push(cur);
+        }
+
+        return out;
+    }, [chartData]);
+
+
 
     // 🔹 2. Derived time span + formatter memoized
     const { spanMs, stepMs } = useMemo(() => {
@@ -134,7 +221,7 @@ function ComponentChartInner({ data, toggleVar, toggleAxis }: ComponentChartProp
         <div className="chart">
             <ResponsiveContainer width="100%" height={400} maxHeight={500} minHeight={300}>
                 <LineChart
-                    data={chartData}
+                    data={chartDataWithGaps}
                     margin={{ top: 20, right: 60, left: 60, bottom: 25 }}
                 >
                     <defs>
@@ -240,8 +327,12 @@ function ComponentChartInner({ data, toggleVar, toggleAxis }: ComponentChartProp
 
                     <Tooltip
                         labelFormatter={(ms) =>
-                        new Date(ms as number).toLocaleString()
+                            new Date(ms as number).toLocaleString("id-ID", {
+                                timeZone: "Asia/Jakarta",
+                                hour12: false,
+                            })
                         }
+                        contentStyle={{fontSize: 12}}
                         formatter={(val: number, name) =>
                         name === "Arus"
                             ? [val.toFixed(3) + " A", "Arus"]

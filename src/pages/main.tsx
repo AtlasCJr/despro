@@ -15,7 +15,7 @@ export default function Main() {
         <>
             <Navbar onChange={changePage} />
             <div className='main-container'>
-                {curPage === 0 && <Dashboard />}
+                {curPage === 0 && <Dashboard onChangePage={changePage} />}
                 {curPage === 1 && <Components />}
                 {curPage === 2 && <Notifications />}
                 {curPage === 3 && <About />}

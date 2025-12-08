@@ -7,23 +7,48 @@ import { notificationTypeMap } from "../hooks/notifstruct"
 
 const mapDay = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ] as const;
 
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
 function toJsDate(d: any): Date {
-    // Firestore Timestamp has .toDate(); plain Date stays as-is
-    return d && typeof d.toDate === "function" ? d.toDate() : new Date(d);
+    if (!d) return new Date(NaN);
+
+    // Firestore Timestamp
+    if (typeof d?.toDate === "function") {
+        return d.toDate(); // already correct instant
+    }
+
+    // Strings / numbers / Date
+    return new Date(d);   // JS will respect Z or +07:00 if present
 }
+
+
 
 function formatDate(dateLike: any): string {
     const date = toJsDate(dateLike);
-    const now = new Date();
-    const isToday =
-        date.getDate() === now.getDate() &&
-        date.getMonth() === now.getMonth() &&
-        date.getFullYear() === now.getFullYear();
+
+    const dateStrWib = date.toLocaleDateString("id-ID", {
+        timeZone: "Asia/Jakarta",
+    });
+    const nowStrWib = new Date().toLocaleDateString("id-ID", {
+        timeZone: "Asia/Jakarta",
+    });
+
+    const isToday = dateStrWib === nowStrWib;
 
     return isToday
-        ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-        : date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+        ? date.toLocaleTimeString("id-ID", {
+              timeZone: "Asia/Jakarta",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+          })
+        : date.toLocaleDateString("id-ID", {
+              timeZone: "Asia/Jakarta",
+              day: "numeric",
+              month: "short",
+          });
 }
+
 
 export default function Notifications() {
     const [isActive, setActive] = useState<number | string>("");
@@ -151,14 +176,13 @@ export default function Notifications() {
 
                             <div className="accordion-content">
                                 <h2>
-                                    {`${mapDay[date.getDay()]}, ${date.getDate()} ${date.toLocaleString(
-                                        "en-US",
-                                        { month: "short" }
-                                        )} ${date.getFullYear()}, ${date.toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                        second: "2-digit",
-                                    })}`}
+                                    {`
+                                        ${mapDay[date.getDay()]}, 
+                                        ${date.getDate()} 
+                                        ${date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", month: "short" })} 
+                                        ${date.getFullYear()}, 
+                                        ${date.toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,})}
+                                    `}
                                 </h2>
                                 <p>{data.content}</p>
 

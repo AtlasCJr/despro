@@ -34,7 +34,7 @@ export const PowerMoneyConsumption = memo(function PowerMoneyConsumption({ kWhUs
 
                     </Pie>
 
-                    <Tooltip formatter={(value) => [`${Number(value).toFixed(2)} kWh`, "Usage"]} />
+                    <Tooltip formatter={(value) => [`${Number(value).toFixed(2)} kWh`, "Usage"]} contentStyle={{fontSize: 12}} />
 
                     <Legend
                         verticalAlign="top"

@@ -5,8 +5,8 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 type PowerLimitRow = {
     id: string;
     name: string;
-    usedKWh: number;   // penggunaan hari ini (total sebenarnya)
-    limitKWh: number;  // batas harian (bisa NaN / undefined)
+    usedWh: number;   // penggunaan hari ini (total sebenarnya)
+    limitWh: number;  // batas harian (bisa NaN / undefined)
 };
 
 type PowerLimitGraphProps = {
@@ -18,33 +18,33 @@ const COLORS = ["#0f766e", "#22c55e", "#eab308", "#f97316", "#ef4444", "#6366f1"
 export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimitGraphProps) {
     const processedData = useMemo(
         () => data.map((d) => {
-            const limit = Number.isFinite(d.limitKWh) ? d.limitKWh : NaN;
+            const limit = Number.isFinite(d.limitWh) ? d.limitWh : NaN;
 
-            let usedKWh = d.usedKWh;       // bagian hijau solid di dalam limit
-            let unusedKWh = 0;             // sisa sebelum limit (diarsir)
-            let overLimitKWh = 0;          // bagian merah di atas limit
+            let usedWh = d.usedWh;       // bagian hijau solid di dalam limit
+            let unusedWh = 0;             // sisa sebelum limit (diarsir)
+            let overLimitWh = 0;          // bagian merah di atas limit
 
             if (Number.isFinite(limit)) {
-                if (d.usedKWh <= limit) {
-                    usedKWh = d.usedKWh;
-                    unusedKWh = Math.max(limit - d.usedKWh, 0);
+                if (d.usedWh <= limit) {
+                    usedWh = d.usedWh;
+                    unusedWh = Math.max(limit - d.usedWh, 0);
                 } else {
-                    usedKWh = limit;
-                    overLimitKWh = d.usedKWh - limit;
-                    unusedKWh = 0;
+                    usedWh = limit;
+                    overLimitWh = d.usedWh - limit;
+                    unusedWh = 0;
                 }
             } else {
-                usedKWh = d.usedKWh;
-                unusedKWh = 0;
-                overLimitKWh = 0;
+                usedWh = d.usedWh;
+                unusedWh = 0;
+                overLimitWh = 0;
             }
 
             return {
                 ...d,
-                limitKWh: limit,
-                usedKWh,
-                unusedKWh,
-                overLimitKWh,
+                limitWh: limit,
+                usedWh,
+                unusedWh,
+                overLimitWh,
             };
         }),
         [data]
@@ -55,7 +55,7 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                 data={processedData}
-                margin={{ top: 0, right: 0, left: 50, bottom: 0 }}
+                margin={{ top: 0, right: 20, left: 50, bottom: 0 }}
                 barCategoryGap={"5%"}
                 barSize={50}
                 barGap={2}
@@ -78,45 +78,46 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
 
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{fontSize: 12}} />
-
-                {/* Y-axis di kanan */}
-                <YAxis orientation="right" tick={{fontSize: 12}} />
+                <YAxis 
+                    orientation="right" 
+                    tick={{fontSize: 12}} 
+                    label={{value: "Energy (Wh)", position: "Left", angle: 90, fontSize: 12, dx: 20 }} 
+                />
 
                 <Tooltip
                     formatter={(value: any, name: string, entry: any) => {
                         const vNum = typeof value === "number" ? value : Number(value ?? 0);
 
                         const payload = entry?.payload ?? {};
-                        const limit = payload.limitKWh as number;
-                        const totalUsedReal = (payload.usedKWh ?? 0) + (payload.overLimitKWh ?? 0);
-                        const over = payload.overLimitKWh ?? 0;
+                        const limit = payload.limitWh as number;
+                        const totalUsedReal = (payload.usedWh ?? 0) + (payload.overLimitWh ?? 0);
+                        const over = payload.overLimitWh ?? 0;
 
                         const limitText = Number.isFinite(limit)
-                            ? `${limit.toFixed(3)} kWh`
-                            : "Tidak ada limit";
+                            ? `${limit.toFixed(3)} Wh`
+                            : "-";
 
                         if (name === "Used") {
                             if (over > 0) {
                                 return [
-                                    `${totalUsedReal.toFixed(3)} kWh (Over: ${over.toFixed(
-                                    3
-                                    )} kWh)`,
-                                    `Used (Limit: ${limitText})`,
+                                    `${totalUsedReal.toFixed(3)} Wh (Over: ${over.toFixed(3)} Wh)`,`Used (Limit: ${limitText})`,
                                 ];
                             }
-                            return [`${totalUsedReal.toFixed(3)} kWh`, `Used (Limit: ${limitText})`];
+                            return [`${totalUsedReal.toFixed(3)} Wh`, `Used`];
                         }
 
                         if (name === "Unused") {
-                            return [`${vNum.toFixed(3)} kWh`, "Remaining"];
+                            return [`${vNum.toFixed(3)} Wh`, "Remaining"];
                         }
 
                         if (name === "Over Limit") {
-                            return [`${vNum.toFixed(3)} kWh`, "Over Limit"];
+                            return [`${vNum.toFixed(3)} Wh`, "Over Limit"];
                         }
 
                         return [vNum, name];
                     }}
+
+                    contentStyle={{fontSize: 12}}
                 />
 
                 <Legend
@@ -124,11 +125,11 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
                     align="left"
                     layout="horizontal"
                     wrapperStyle={{paddingBottom: 12, fontSize: 15}}
-                    />
+                />
 
                 {/* Bagian sisa sebelum limit (diarsir hijau) */}
                 <Bar
-                    dataKey="unusedKWh"
+                    dataKey="unusedWh"
                     name="Unused"
                     stackId="usage"
                     fill="url(#unusedPattern)"
@@ -136,7 +137,7 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
 
                 {/* Bagian pemakaian sampai limit (hijau solid) */}
                 <Bar
-                    dataKey="usedKWh"
+                    dataKey="usedWh"
                     name="Used"
                     stackId="usage"
                     fill={COLORS[0]}
@@ -144,7 +145,7 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
 
                 {/* Bagian yang over limit (merah) */}
                 <Bar
-                    dataKey="overLimitKWh"
+                    dataKey="overLimitWh"
                     name="Over Limit"
                     stackId="usage"
                     fill={COLORS[4]}
