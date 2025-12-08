@@ -160,7 +160,7 @@ export default function Components() {
     const avgWh      = plSummary?.avgEnergy ?? 0;    // Wh/h (or your schema)
     const peakKW      = plSummary?.peakEnergy ?? 0;       // W
 
-    const maxSocket = 4
+    const maxSocket = 3
 
     // function changeScale(x: number) {
     //     setScaleSelected(x);
@@ -449,14 +449,6 @@ export default function Components() {
                                     <h3>{Num2Currency(Math.round(component?.info?.powerLimit as number * RpPerWh))}</h3>
                                 ))}
                         </div>
-                        {/* <div>
-                            <h3>Has Tripped</h3>
-                            <h3>{loading ? "Loading..." : (hasTripped ? "True" : "False")}</h3>
-                        </div>
-                        <div>
-                            <h3>Trip Count</h3>
-                            <h3>{loading ? "Loading..." : Number(tripCount)}</h3>
-                        </div> */}
                         <div>
                             <h3>Status</h3>
                             <h3>{loading ? "Loading..." : (component?.info.isOn ? "On" : "Off")}</h3>
