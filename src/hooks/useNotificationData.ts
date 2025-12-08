@@ -1,20 +1,6 @@
 // useNotificationData.ts
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  limit as qlimit,
-  onSnapshot,
-  orderBy,
-  query,
-  QueryConstraint,
-  QueryDocumentSnapshot,
-  startAfter,
-  updateDoc,
-  where,
-  type Unsubscribe,
-} from "firebase/firestore";
+import { collection, deleteDoc, doc, limit as qlimit, onSnapshot, orderBy, query, QueryConstraint, QueryDocumentSnapshot, startAfter, updateDoc, where, writeBatch, getDocs, type Unsubscribe } from "firebase/firestore";
 import { db } from "../firebase";
 import type { NotificationStruct } from "./notifstruct";
 
@@ -157,15 +143,28 @@ export function useNotificationData(opts: UseNotificationOpts = {}) {
     }
 
     async function markAllRead(ids?: string[]) {
-        // If ids omitted, use current page
-        const targetIds = ids && ids.length ? ids : notifications.map((n) => n.id);
-        // Small batches are fine; for big sets switch to writeBatch
+        let targetIds: string[];
+
+        if (ids && ids.length) {
+            // explicit list – keep current behaviour
+            targetIds = ids;
+        } else {
+            // 🔴 NEW: query ALL unread notifications from Firestore
+            const qUnread = query(
+                collection(db, "notifications"),
+                where("isRead", "==", false)
+            );
+            const snap = await getDocs(qUnread);
+            targetIds = snap.docs.map((d) => d.id);
+        }
+
         const batchSize = 400;
         for (let i = 0; i < targetIds.length; i += batchSize) {
             const chunk = targetIds.slice(i, i + batchSize);
-            const { writeBatch } = await import("firebase/firestore");
             const b = writeBatch(db);
-            chunk.forEach((nid) => b.update(doc(db, "notifications", nid), { isRead: true }));
+            chunk.forEach((nid) => {
+                b.update(doc(db, "notifications", nid), { isRead: true });
+            });
             await b.commit();
         }
     }
