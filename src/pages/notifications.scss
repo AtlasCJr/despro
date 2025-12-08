@@ -27,7 +27,7 @@
 
     display: flex;
     flex-direction: column;
-    gap: var(--dashboardMargin);
+    gap: calc(var(--dashboardMargin) / 2);
 
     & > h1 {
         font-weight: 700;
@@ -41,7 +41,7 @@
     border-radius: 1rem;
     display: flex;
     flex-direction: row;
-    gap: 2rem;
+    gap: 1rem;
 
     span {
         padding: .25rem 0;
@@ -53,7 +53,14 @@
         padding: 0 1rem;
         border-radius: .5rem;
         cursor: pointer;
+
+        &:last-child {
+            background-color: rgb(255, 124, 124);
+            color: white;
+        }
     }
+
+    font-size: .75rem;
 }
 
 .notifications .container {
