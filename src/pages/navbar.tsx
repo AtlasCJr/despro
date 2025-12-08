@@ -1,17 +1,15 @@
 import './navbar.scss'
 
-import { useState } from 'react';
 import { DashboardLogo, ComponentsLogo, NotificationLogo, AboutLogo } from '../assets/icons';
 
 import Logo from "../assets/images/LogoText.png";
 
 type NavbarProps = {
+    selected: number;
     onChange: (page: number) => void;
 };
 
-export default function Navbar({ onChange }: NavbarProps) {
-    const [selected, setSelected] = useState<number>(0)
-
+export default function Navbar({ selected, onChange }: NavbarProps) {
     const menuItems = [
         { label: "Dashboard", icon: <DashboardLogo /> },
         { label: "Components", icon: <ComponentsLogo /> },
@@ -21,29 +19,26 @@ export default function Navbar({ onChange }: NavbarProps) {
 
     return (
         <div className="nav-bar">
-            <img style={{scale: 1.2}} src={Logo} alt="Logo" />
-            
+            <img style={{ scale: 1.2 }} src={Logo} alt="Logo" />
+
             <ul>
+                {/* This should change when `selected` changes */}
                 <div className={`cursor-selected level-${selected}`} />
 
                 {menuItems.map((item, index) => (
                     <li key={index}>
                         <div>
-                            <a className={index === selected ? 'selected' : ''} 
-                            onClick={() => {
-                                setSelected(index),
-                                onChange(index)
-                            }}>
+                            <a
+                                className={index === selected ? "selected" : ""}
+                                onClick={() => onChange(index)}
+                            >
                                 {item.icon}
                                 <h2>{item.label}</h2>
                             </a>
                         </div>
-
-                        {/* {item.label === "Notifications" && item.notifNum != 0 && item.warningNum == 0 && <h3 className={selected !== 2 ? 'notif' : 'notif unshow'}>{item.notifNum}</h3>}
-                        {item.label === "Notifications" && item.warningNum != 0 && <h3 className={selected !== 2 ? 'warning' : 'warning unshow'}>{item.warningNum}</h3>} */}
                     </li>
                 ))}
             </ul>
         </div>
-    )
+    );
 }

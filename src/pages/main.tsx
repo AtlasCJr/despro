@@ -8,18 +8,18 @@ import Components from './components'
 import Notifications from './notifications'
 import About from './about'
 
-export default function Main() {
-    const [curPage, changePage] = useState<number>(0);
+export default function App() {
+    const [page, setPage] = useState(0);
 
     return (
         <>
-            <Navbar onChange={changePage} />
+            <Navbar selected={page} onChange={setPage} />
             <div className='main-container'>
-                {curPage === 0 && <Dashboard onChangePage={changePage} />}
-                {curPage === 1 && <Components />}
-                {curPage === 2 && <Notifications />}
-                {curPage === 3 && <About />}
+                {page === 0 && <Dashboard onChangePage={setPage} />}
+                {page === 1 && <Components />}
+                {page === 2 && <Notifications />}
+                {page === 3 && <About />}
             </div>
         </>
-    )
+    );
 }
