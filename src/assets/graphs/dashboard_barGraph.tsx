@@ -55,7 +55,7 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                 data={processedData}
-                margin={{ top: 0, right: 20, left: 50, bottom: 0 }}
+                margin={{ top: 0, right: 50, left: 50, bottom: 0 }}
                 barCategoryGap={"5%"}
                 barSize={50}
                 barGap={2}
@@ -81,7 +81,7 @@ export const PowerLimitGraph = memo(function PowerLimitGraph({ data }: PowerLimi
                 <YAxis 
                     orientation="right" 
                     tick={{fontSize: 12}} 
-                    label={{value: "Energy (Wh)", position: "Left", angle: 90, fontSize: 12, dx: 20 }} 
+                    label={{value: "Energy (Wh)", position: "Left", angle: 90, fontSize: 12, dx: 40 }} 
                 />
 
                 <Tooltip
