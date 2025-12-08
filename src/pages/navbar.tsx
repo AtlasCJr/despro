@@ -22,7 +22,6 @@ export default function Navbar({ selected, onChange }: NavbarProps) {
             <img style={{ scale: 1.2 }} src={Logo} alt="Logo" />
 
             <ul>
-                {/* This should change when `selected` changes */}
                 <div className={`cursor-selected level-${selected}`} />
 
                 {menuItems.map((item, index) => (
