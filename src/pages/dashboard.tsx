@@ -352,7 +352,7 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
                         <ComponentsLogo />
                     </div>
                     <div>
-                        <h1>{powerNow} W</h1>
+                        <h1>{formatPower(powerNow, "W")}</h1>
                     </div>
                 </div>
 
