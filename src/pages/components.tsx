@@ -152,7 +152,8 @@ export default function Components() {
 
     // inside Components()
     const processedRows = (layers?.[activeProcessedLayer] ?? []) as Array<Record<string, any>>;
-    const plSummary = processedRows[0] ?? null; // if PL has a single summary doc
+    const plSummary = processedRows.length > 0 ? processedRows[processedRows.length - 1] : null;
+
 
     // Optional fallbacks:
     const durationH   = plSummary?.duration ?? 0;        // hours
@@ -416,7 +417,7 @@ export default function Components() {
                         </div>
                         <div>
                             <h3>Duration</h3>
-                            <h3>{loading ? "Loading..." : `${Number(durationH).toFixed(1)} h`}</h3>
+                            <h3>{loading ? "Loading..." : `${Number(durationH).toFixed(3)} h`}</h3>
                         </div>
                         <div>
                             <h3>Used Energy</h3>
@@ -442,7 +443,7 @@ export default function Components() {
                                 {loading
                                     ? "Loading..."
                                     : (Number.isFinite(component?.info.powerLimit)
-                                        ? component!.info.powerLimit + " Wh"
+                                        ? formatPower(component!.info.powerLimit, "Wh")
                                         : "-")}
                             </h3>
                                 {loading ? "" : (Number.isFinite(component?.info?.powerLimit) && (
