@@ -5,13 +5,18 @@ import { Num2Currency } from '../../utils/Num2Currency'
 
 const COLORS = ["#0f766e", "#22c55e", "#eab308", "#f97316", "#ef4444", "#6366f1"];
 
-type PowerMoneyProps = { kWhUsagePerComponent: Record<string, number> };
+type PowerMoneyProps = { WhUsagePerComponent: Record<string, number> };
 
-export const PowerMoneyConsumption = memo(function PowerMoneyConsumption({ kWhUsagePerComponent }: PowerMoneyProps) {
-    const data = Object.entries(kWhUsagePerComponent).map(([name, kWh]) => ({
-        name,
-        value: Number(kWh.toFixed(3)),
-    }));
+export const PowerMoneyConsumption = memo(function PowerMoneyConsumption({ WhUsagePerComponent }: PowerMoneyProps) {
+    const data = Object.entries(WhUsagePerComponent).map(([name, Wh]) => {
+        const raw = Number(Wh.toFixed(3));
+        const value = raw > 0 && raw < 0.001 ? 0.001 : raw; // tiny but visible
+        return { name, value };
+    });
+
+    if (data.every(d => d.value === 0)) {
+        return <p>No usage today.</p>;
+    }
 
     return (
         <div className="chart">
@@ -34,7 +39,7 @@ export const PowerMoneyConsumption = memo(function PowerMoneyConsumption({ kWhUs
 
                     </Pie>
 
-                    <Tooltip formatter={(value) => [`${Number(value).toFixed(2)} kWh`, "Usage"]} contentStyle={{fontSize: 12}} />
+                    <Tooltip formatter={(value) => [`${Number(value).toFixed(2)} Wh`, "Usage"]} contentStyle={{fontSize: 12}} />
 
                     <Legend
                         verticalAlign="top"
