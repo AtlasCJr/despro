@@ -72,7 +72,7 @@ export default function Notifications() {
         [types, infoTypes]
     );
 
-    const {notifications, unreadCount, loading, error, markRead, markAllRead, remove } = useNotificationData(notifOpts);
+    const {notifications, unreadCount, loading, error, markRead, markAllRead, remove, removeAll } = useNotificationData(notifOpts);
 
     function changeShowNotif(x: number) {
         setShowNotif((prev) => {
@@ -106,7 +106,7 @@ export default function Notifications() {
             <div className="toolbar">
                 {loading ? <span className="muted">Loading…</span> : null}
                 {error ? <span className="error">Error: {String((error as any)?.message || error)}</span> : null}
-                <span className="badge">Unread: {unreadCount}</span>
+                <span className="badge">Unread: {unreadCount === 0 ? "None" : unreadCount}</span>
                 <button
                     className="mark-all"
                     disabled={!notifications.length}
@@ -114,6 +114,14 @@ export default function Notifications() {
                     title="Mark page as read"
                 >
                     Mark all as read
+                </button>
+                <button
+                    className="delete-all"
+                    disabled={!notifications.length}
+                    onClick={() => removeAll()}
+                    title="Delete all"
+                >
+                    Delete all
                 </button>
             </div>
 
@@ -145,59 +153,59 @@ export default function Notifications() {
                 </div>
 
                 <div className="content">
-                {notifications.map((data, index) => {
-                    const typeIdx = notifType.indexOf(data.type as (typeof notifType)[number]);
-                    if (typeIdx === -1 || !showNotif[typeIdx]) return null;
+                    {notifications.map((data, index) => {
+                        const typeIdx = notifType.indexOf(data.type as (typeof notifType)[number]);
+                        if (typeIdx === -1 || !showNotif[typeIdx]) return null;
 
-                    const opened = isActive === data.id;
-                    const date = toJsDate(data.date);
+                        const opened = isActive === data.id;
+                        const date = toJsDate(data.date);
 
-                    return (
-                        <div key={data.id} className={`accordion ${opened ? "active" : ""}`}>
-                            <div
-                                className={`accordion-header ${data.isRead ? "read" : ""}`}
-                                onClick={() => handleClick(index)}
-                            >
-                                <div className={`circle ${notificationTypeMap[data["type"]]}`}/>
-                                <div>
-                                    <h3>{data["info-type"]}</h3>
+                        return (
+                            <div key={data.id} className={`accordion ${opened ? "active" : ""}`}>
+                                <div
+                                    className={`accordion-header ${data.isRead ? "read" : ""}`}
+                                    onClick={() => handleClick(index)}
+                                >
+                                    <div className={`circle ${notificationTypeMap[data["type"]]}`}/>
+                                    <div>
+                                        <h3>{data["info-type"]}</h3>
+                                    </div>
+
+                                    <div>
+                                        <h3>{data.name}</h3>
+                                        <div />
+                                    </div>
+
+                                    <div>
+                                        <h3>{formatDate(date)}</h3>
+                                        <RightAngle />
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <h3>{data.name}</h3>
-                                    <div />
-                                </div>
+                                <div className="accordion-content">
+                                    <h2>
+                                        {`
+                                            ${mapDay[date.getDay()]}, 
+                                            ${date.getDate()} 
+                                            ${date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", month: "short" })} 
+                                            ${date.getFullYear()}, 
+                                            ${date.toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,}).replaceAll('.', ':')}
+                                        `}
+                                    </h2>
+                                    <p>{data.content}</p>
 
-                                <div>
-                                    <h3>{formatDate(date)}</h3>
-                                    <RightAngle />
+                                    <div className="row actions">
+                                        <button onClick={() => markRead(data.id, true)} disabled={data.isRead}> Mark read </button>
+                                        <button className="danger" onClick={() => remove(data.id)}> Delete </button>
+                                    </div>
                                 </div>
                             </div>
+                        );
+                    })}
 
-                            <div className="accordion-content">
-                                <h2>
-                                    {`
-                                        ${mapDay[date.getDay()]}, 
-                                        ${date.getDate()} 
-                                        ${date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", month: "short" })} 
-                                        ${date.getFullYear()}, 
-                                        ${date.toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,})}
-                                    `}
-                                </h2>
-                                <p>{data.content}</p>
-
-                                <div className="row actions">
-                                    <button onClick={() => markRead(data.id, true)} disabled={data.isRead}> Mark read </button>
-                                    <button className="danger" onClick={() => remove(data.id)}> Delete </button>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-
-                {!loading && !error && notifications.length === 0 ? (
-                    <div className="empty">No notifications match the current filter.</div>
-                ) : null}
+                    {!loading && !error && notifications.length === 0 ? (
+                        <div className="empty">No notifications match the current filter.</div>
+                    ) : null}
                 </div>
             </div>
         </div>
