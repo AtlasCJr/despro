@@ -173,6 +173,29 @@ export function useNotificationData(opts: UseNotificationOpts = {}) {
         await deleteDoc(doc(db, "notifications", id));
     }
 
+    async function removeAll(ids?: string[]) {
+        let targetIds: string[];
+
+        if (ids && ids.length) {
+            // If caller passes an explicit list, use that
+            targetIds = ids;
+        } else {
+            // Otherwise: delete ALL notifications in the collection
+            const snap = await getDocs(collection(db, "notifications"));
+            targetIds = snap.docs.map((d) => d.id);
+        }
+
+        const batchSize = 400; // stay under Firestore 500 limit
+        for (let i = 0; i < targetIds.length; i += batchSize) {
+            const chunk = targetIds.slice(i, i + batchSize);
+            const b = writeBatch(db);
+            chunk.forEach((nid) => {
+                b.delete(doc(db, "notifications", nid));
+            });
+            await b.commit();
+        }
+    }
+
     return {
         notifications,
         unreadCount,
@@ -181,5 +204,6 @@ export function useNotificationData(opts: UseNotificationOpts = {}) {
         markRead,
         markAllRead,
         remove,
+        removeAll
     };
 }
