@@ -134,8 +134,26 @@ export const TotalPowerTodayMulti = memo(function TotalPowerTodayMulti({
                     </defs>
 
                     <CartesianGrid stroke="#EEEEEE" vertical={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={24} minTickGap={60} tick={{fontSize: 12}} />
-                    <YAxis label={{ value: "Power (W)", position: "insideLeft", angle: -90, fontSize: 12 }} axisLine={false} tickLine={false} tick={{fontSize: 12}} />
+
+                    <XAxis 
+                        dataKey="name" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tickMargin={24} 
+                        minTickGap={60} 
+                        tick={{fontSize: 12}} 
+                    />
+
+                    <YAxis 
+                        label={{ value: "Power (W)", position: "insideLeft", angle: -90, fontSize: 12 }} 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fontSize: 12}} 
+                        domain={[
+                            (min: number) => 0,
+                            (max: number) => Math.round(max * 1.1),
+                        ]}
+                    />
                     <Tooltip formatter={(val: number) => val.toFixed(2) + " W"} contentStyle={{fontSize: 12}} />
 
                     <Legend verticalAlign="bottom" align="center" wrapperStyle={{ position: "relative", fontSize: 15 }} />
