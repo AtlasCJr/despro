@@ -153,27 +153,44 @@ export default function Dashboard({ onChangePage }: DashboardProps) {
 
         return { powerNow: p, latestTimestamp: last };
     }, [latestRL1, todayStartMs]);
-
+    
     const usageRows = useMemo(() => {
-    // only components with data today
-    const entriesToday = Object.entries(latestRL1).filter(
-        ([, data]: [string, any]) =>
-            data && typeof data.ts === "number" && data.ts >= todayStartMs
-    );
+        const STALE_MS = 2 * 60 * 1000; // 2 minutes, adjust as needed
 
-    const total = entriesToday.reduce((sum, [, data]: [string, any]) => {
-        const p = typeof data["daya-aktif"] === "number" ? data["daya-aktif"] : 0;
-        return sum + p;
-    }, 0);
+        // 1) Prepare clean rows for ALL components
+        const rows = compIds.map((compId) => {
+            const data = latestRL1[compId];
+            const ts = data?.ts ?? 0;
 
-    return entriesToday
-        .sort(([, a]: any, [, b]: any) => (b?.["daya-aktif"] ?? 0) - (a?.["daya-aktif"] ?? 0))
-        .map(([compId, data]: [string, any]) => {
-            const power = typeof data?.["daya-aktif"] === "number" ? data["daya-aktif"] : 0;
-            const pct = total > 0 ? (power / total) * 100 : 0;
-            return { compId, data, power, pct };
+            let fresh = false;
+            if (latestTimestamp && ts >= todayStartMs) {
+                fresh = (latestTimestamp - ts) <= STALE_MS;
+            }
+
+            // if stale → treat as 0 W
+            const realPower = fresh
+                ? (data?.["daya-aktif"] ?? 0)
+                : 0;
+
+            return {
+                compId,
+                data,
+                power: realPower,
+                pct: 0, // we'll calculate later
+                fresh,
+            };
         });
-}, [latestRL1, todayStartMs]);
+
+        // 2) Total for percentage
+        const totalPower = rows.reduce((s, r) => s + r.power, 0);
+
+        // 3) Assign percentages
+        return rows.map((r) => ({
+            ...r,
+            pct: totalPower > 0 ? (r.power / totalPower) * 100 : 0,
+        }));
+    }, [latestRL1, latestTimestamp, todayStartMs, compIds]);
+
 
 
 
