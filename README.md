@@ -1,6 +1,6 @@
-# GTW NAMA APPNYA
+# Arcana
 
-Despro is an IoT-based smart power-monitoring system built using ESP32, ACS712 current sensors, ZMPT voltage sensors, relays, and a React + Firebase web dashboard.
+Arcana is an IoT-based smart power-monitoring system built using ESP32, ACS712 current sensors, ZMPT voltage sensors, relays, and a React + Firebase web dashboard.
 
 ## What This Project Does
 
